@@ -3,3 +3,4 @@ docxcompose
 jinja2
 lxml
 sphinx-book-theme
+pillow

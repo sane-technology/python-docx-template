@@ -6,6 +6,7 @@ Created : 2015-03-12
 """
 
 from os import PathLike
+import sys
 from typing import Any, Optional, IO, Union, Dict, Set
 from .subdoc import Subdoc
 import functools
@@ -28,7 +29,7 @@ import re
 import binascii
 import os
 import zipfile
-
+from PIL import Image
 
 class DocxTemplate(object):
     """Class for managing docx files as they were jinja2 templates"""
@@ -812,6 +813,7 @@ class DocxTemplate(object):
 
     def _replace_docx_part_pics(self, doc_part, replaced_pics):
 
+        print("Replacing pictures in part %s" % doc_part.partname, file=sys.stderr)
         et = etree.fromstring(doc_part.blob)
 
         part_map = {}
@@ -857,17 +859,57 @@ class DocxTemplate(object):
                     doc_part.rels[rel].target_ref,
                     doc_part.rels[rel].target_part,
                 )
+                
+                image_data = part_map[filename][1]._blob
+                pil_image = Image.open(io.BytesIO(image_data))
+                max_width = pil_image.width
+                max_height = pil_image.height
+                old_format = pil_image.format
+                pil_image.close()
 
                 # replace data
                 for img_id, img_data in self.pics_to_replace.items():
+                    print("checking image %s against %s|%s|%s" % (
+                        img_id, filename, title, description), file=sys.stderr)
                     if img_id == filename or img_id == title or img_id == description:
-                        part_map[filename][1]._blob = img_data
+                        print("Replacing image %s with %s" % (filename, img_id), file=sys.stderr)
+                        print(type(img_data), file=sys.stderr)
+                        pil_image = Image.open(io.BytesIO(img_data))
+                        width_factor = pil_image.width / max_width
+                        height_factor = pil_image.height / max_height
+                        
+                        print("Width factor: %s, Height factor: %s" % (width_factor, height_factor), file=sys.stderr)
+                        
+                        resize_factor = max(width_factor, height_factor)
+                        new_width = int(pil_image.width / resize_factor)
+                        new_height = int(pil_image.height / resize_factor)
+                        
+                        print("Resizing image to %s x %s" % (new_width, new_height), file=sys.stderr)
+                        
+                        resized_image = pil_image.resize(
+                            (new_width, new_height)
+                        )
+                        
+                        new_img_data = io.BytesIO()
+                        resized_image.save(new_img_data, format=old_format)
+
+                        # resized_image.save("/tmp/resized_image.png")
+                        
+                        
+                        # debug_img = open("/tmp/debug_image.png", "wb")
+                        # debug_img.write(new_img_data.getbuffer())
+                        # debug_img.close()
+                        resized_image.close()
+                        pil_image.close()
+
+                        part_map[filename][1]._blob = new_img_data.getvalue()
                         replaced_pics[img_id] = True
                         break
 
             # FIXME: figure out what exceptions are thrown here
             # and catch more specific exceptions
-            except Exception:
+            except Exception as e:
+                print(f"Error processing image {filename}: {e}", file=sys.stderr)
                 continue
 
         self.pic_map.update(part_map)
