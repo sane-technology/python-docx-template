@@ -860,6 +860,23 @@ class DocxTemplate(object):
                     doc_part.rels[rel].target_part,
                 )
                 
+                
+                x_align = 'c'
+                y_align = 'c'
+                
+                # use regex to find x[l|c|r] and y[t|b|c] in description
+                # both of them are optional
+                
+                x_match = re.search(r'x[lcr]?', description)
+                if x_match:
+                    x_align = x_match.group(0)[1:] if len(x_match.group(0)) > 1 else 'c'
+
+                y_match = re.search(r'y[tbc]?', description)
+                if y_match:
+                    y_align = y_match.group(0)[1:] if len(y_match.group(0)) > 1 else 'c'
+
+                print("alignment: x=%s, y=%s" % (x_align, y_align), file=sys.stderr)
+
                 image_data = part_map[filename][1]._blob
                 pil_image = Image.open(io.BytesIO(image_data))
                 max_width = pil_image.width
@@ -914,6 +931,17 @@ class DocxTemplate(object):
                         
                         x_offset = (max_width - new_width) // 2
                         y_offset = (max_height - new_height) // 2
+                        
+                        if x_align == 'l':
+                            x_offset = 0
+                        elif x_align == 'r':
+                            x_offset = max_width - new_width
+                            
+                        if y_align == 't':
+                            y_offset = 0
+                        elif y_align == 'b':
+                            y_offset = max_height - new_height
+                        
                         dest_img.paste(resized_image, (x_offset, y_offset))
                         
                         new_img_data = io.BytesIO()
