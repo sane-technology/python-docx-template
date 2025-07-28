@@ -864,8 +864,28 @@ class DocxTemplate(object):
                 pil_image = Image.open(io.BytesIO(image_data))
                 max_width = pil_image.width
                 max_height = pil_image.height
+                original_aspect_ratio = max_width / max_height
                 old_format = pil_image.format
                 pil_image.close()
+                
+                cx = gd.xpath(
+                    "pic:pic/pic:spPr/a:xfrm/a:ext/@cx",
+                    namespaces=docx.oxml.ns.nsmap,
+                )
+                cy = gd.xpath(
+                    "pic:pic/pic:spPr/a:xfrm/a:ext/@cy",
+                    namespaces=docx.oxml.ns.nsmap,
+                )
+                scaled_aspect_ratio = original_aspect_ratio
+                if cx and cy:
+                    scaled_aspect_ratio = (
+                        float(cx[0]) / float(cy[0])
+                        if float(cy[0]) != 0
+                        else original_aspect_ratio
+                    )
+                    
+
+                ar_factor = original_aspect_ratio / scaled_aspect_ratio
 
                 # replace data
                 for img_id, img_data in self.pics_to_replace.items():
@@ -881,7 +901,7 @@ class DocxTemplate(object):
                         print("Width factor: %s, Height factor: %s" % (width_factor, height_factor), file=sys.stderr)
                         
                         resize_factor = max(width_factor, height_factor)
-                        new_width = int(pil_image.width / resize_factor)
+                        new_width = int((pil_image.width / resize_factor) * ar_factor)
                         new_height = int(pil_image.height / resize_factor)
                         
                         print("Resizing image to %s x %s" % (new_width, new_height), file=sys.stderr)
@@ -890,8 +910,14 @@ class DocxTemplate(object):
                             (new_width, new_height)
                         )
                         
+                        dest_img = Image.new("RGBA", (max_width, max_height), (255, 255, 255, 0))
+                        
+                        x_offset = (max_width - new_width) // 2
+                        y_offset = (max_height - new_height) // 2
+                        dest_img.paste(resized_image, (x_offset, y_offset))
+                        
                         new_img_data = io.BytesIO()
-                        resized_image.save(new_img_data, format=old_format)
+                        dest_img.save(new_img_data, format=old_format)
 
                         # resized_image.save("/tmp/resized_image.png")
                         
