@@ -918,7 +918,7 @@ class DocxTemplate(object):
                         print("Width factor: %s, Height factor: %s" % (width_factor, height_factor), file=sys.stderr)
                         
                         resize_factor = max(width_factor, height_factor)
-                        new_width = int((pil_image.width / resize_factor) * ar_factor)
+                        new_width = int((pil_image.width / resize_factor) * ar_factor * ar_factor)
                         new_height = int(pil_image.height / resize_factor)
                         
                         print("Resizing image to %s x %s" % (new_width, new_height), file=sys.stderr)
