@@ -912,13 +912,15 @@ class DocxTemplate(object):
                         print("Replacing image %s with %s" % (filename, img_id), file=sys.stderr)
                         print(type(img_data), file=sys.stderr)
                         pil_image = Image.open(io.BytesIO(img_data))
-                        width_factor = max_width / pil_image.width
-                        height_factor = max_height / pil_image.height
+                        replace_image_width = pil_image.width
+                        replace_image_height = pil_image.height
+                        width_factor = max_width / (replace_image_width * ar_factor)
+                        height_factor = max_height / replace_image_height
 
                         print("Width factor: %s, Height factor: %s" % (width_factor, height_factor), file=sys.stderr)
                         
                         resize_factor = min(width_factor, height_factor)
-                        new_width = int((pil_image.width * resize_factor) * ar_factor)
+                        new_width = int(pil_image.width * resize_factor * ar_factor)
                         new_height = int(pil_image.height * resize_factor)
                         
                         print("Resizing image to %s x %s" % (new_width, new_height), file=sys.stderr)
