@@ -908,7 +908,7 @@ class DocxTemplate(object):
                 for img_id, img_data in self.pics_to_replace.items():
                     print("checking image %s against %s|%s|%s" % (
                         img_id, filename, title, description), file=sys.stderr)
-                    if img_id == filename or img_id == title:
+                    if img_id == filename or img_id == title or description.startswith(img_id):
                         print("Replacing image %s with %s" % (filename, img_id), file=sys.stderr)
                         print(type(img_data), file=sys.stderr)
                         pil_image = Image.open(io.BytesIO(img_data))
