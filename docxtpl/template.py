@@ -908,18 +908,18 @@ class DocxTemplate(object):
                 for img_id, img_data in self.pics_to_replace.items():
                     print("checking image %s against %s|%s|%s" % (
                         img_id, filename, title, description), file=sys.stderr)
-                    if img_id == filename or img_id == title or img_id == description:
+                    if img_id == filename or img_id == title:
                         print("Replacing image %s with %s" % (filename, img_id), file=sys.stderr)
                         print(type(img_data), file=sys.stderr)
                         pil_image = Image.open(io.BytesIO(img_data))
-                        width_factor = pil_image.width / max_width
-                        height_factor = pil_image.height / max_height
-                        
+                        width_factor = max_width / pil_image.width
+                        height_factor = max_height / pil_image.height
+
                         print("Width factor: %s, Height factor: %s" % (width_factor, height_factor), file=sys.stderr)
                         
-                        resize_factor = max(width_factor, height_factor)
-                        new_width = int((pil_image.width / resize_factor) * ar_factor * ar_factor)
-                        new_height = int(pil_image.height / resize_factor)
+                        resize_factor = min(width_factor, height_factor)
+                        new_width = int((pil_image.width * resize_factor) * ar_factor)
+                        new_height = int(pil_image.height * resize_factor)
                         
                         print("Resizing image to %s x %s" % (new_width, new_height), file=sys.stderr)
                         
