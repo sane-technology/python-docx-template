@@ -4,11 +4,11 @@ Created : 2015-03-12
 
 @author: Eric Lapouyade
 """
+from __future__ import annotations
 
 from os import PathLike
 import sys
-from typing import Any, Optional, IO, Union, Dict, Set
-from .subdoc import Subdoc
+from typing import TYPE_CHECKING, Any, Optional, IO, Union, Dict, Set
 import functools
 import io
 from lxml import etree
@@ -30,6 +30,10 @@ import binascii
 import os
 import zipfile
 from PIL import Image
+
+if TYPE_CHECKING:
+    from .subdoc import Subdoc
+
 
 class DocxTemplate(object):
     """Class for managing docx files as they were jinja2 templates"""
@@ -536,7 +540,7 @@ class DocxTemplate(object):
                 width = 0.0
                 new_average = None
                 for c in columns:
-                    if not c.get(ns + "w") is None:
+                    if c.get(ns + "w") is not None:
                         width += float(c.get(ns + "w"))
                 # try to keep proportion of table
                 if width > 0:
@@ -611,7 +615,9 @@ class DocxTemplate(object):
             self.docx_ids_index += 1
             elt.attrib["id"] = str(self.docx_ids_index)
 
-    def new_subdoc(self, docpath=None):
+    def new_subdoc(self, docpath=None) -> Subdoc:
+        from .subdoc import Subdoc
+
         self.init_docx()
         return Subdoc(self, docpath)
 

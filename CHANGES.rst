@@ -1,3 +1,8 @@
+0.20.2 (2025-11-13)
+-------------------
+- Fix fix_tables()
+- Move docxcompose to optional dependency (Thanks to Waket Zheng)
+
 0.20.1 (2025-07-15)
 -------------------
 - Fix and improve get_undeclared_template_variables() method (Thanks to Pablo Esteban)
